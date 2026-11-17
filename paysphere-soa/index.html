@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaySphere · Self-Healing SOA for UPI-Scale Payments</title>
+<meta name="description" content="Case study for 21CSE457T Service Oriented Architecture: saga orchestration, circuit breakers, QoS-aware composition and runtime governance under chaos, with live simulators.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%2306b6d4'/><circle cx='16' cy='16' r='6' fill='%230b1120'/></svg>">
+</head>
+<body>
+<div class="shell">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#overview">
+      <span class="brand-mark"><i></i></span>
+      <span><b>PaySphere</b><small>SOA Control Room</small></span>
+    </a>
+    <nav class="nav">
+      <div class="nav-group">Case study</div>
+      <a href="#overview" data-view="overview"><span class="ix">00</span>Overview</a>
+      <a href="#architecture" data-view="architecture"><span class="ix">01</span>Architecture</a>
+      <div class="nav-group">Live labs</div>
+      <a href="#chaos" data-view="chaos"><span class="ix">02</span>Chaos Lab</a>
+      <a href="#breaker" data-view="breaker"><span class="ix">03</span>Circuit Breaker</a>
+      <a href="#saga" data-view="saga"><span class="ix">04</span>Saga Orchestrator</a>
+      <a href="#qos" data-view="qos"><span class="ix">05</span>QoS Composer</a>
+      <a href="#business" data-view="business"><span class="ix">06</span>Business Case</a>
+      <div class="nav-group">Evidence</div>
+      <a href="#results" data-view="results"><span class="ix">07</span>Results Gallery</a>
+      <a href="#report" data-view="report"><span class="ix">08</span>Report &amp; Method</a>
+    </nav>
+    <div class="side-foot">
+      <div class="status"><span class="dot"></span>All simulations run in your browser</div>
+      <div class="course">21CSE457T · Service Oriented Architecture</div>
+    </div>
+  </aside>
+
+  <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+
+  <main class="main">
+
+    <!-- ================= OVERVIEW ================= -->
+    <section class="view" id="view-overview">
+      <div class="hero">
+        <div class="eyebrow">Case study · 21CSE457T Service Oriented Architecture</div>
+        <h1>Self-healing service orchestration for a <em>UPI-scale</em> payment ecosystem</h1>
+        <p class="lede">PaySphere is a 23-service enterprise SOA. We break it on purpose by injecting bank outages and switch latency spikes, then measure how resilience patterns, saga transactions, QoS-aware composition and runtime governance keep payments flowing. Every lab on this site is a working simulator you can drive yourself.</p>
+        <div class="hero-cta">
+          <a class="btn primary" href="#chaos">Open the Chaos Lab →</a>
+          <a class="btn ghost" href="#architecture">Explore the architecture</a>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-v" data-count="91.1" data-suffix="%">0</div><div class="kpi-l">availability during bank brown-out</div><div class="kpi-s">vs 35.0% with naive synchronous calls</div></div>
+        <div class="kpi"><div class="kpi-v" data-count="5000">0</div><div class="kpi-l">saga transactions simulated</div><div class="kpi-s">0 left in a partial state</div></div>
+        <div class="kpi"><div class="kpi-v" data-count="161">0</div><div class="kpi-l">Pareto-optimal bindings</div><div class="kpi-s">out of 7,776 compositions</div></div>
+        <div class="kpi"><div class="kpi-v" data-count="98.9" data-suffix="%">0</div><div class="kpi-l">Monte Carlo runs where SOA wins</div><div class="kpi-s">10,000 five-year NPV scenarios</div></div>
+      </div>
+
+      <h2 class="sec-title">The problem</h2>
+      <div class="grid-3">
+        <div class="card"><div class="card-tag">Failure</div><h3>One slow bank stalls everyone</h3><p>In a synchronous call chain, a core banking system that slows down makes every upstream service wait for the full timeout. Threads pile up and the outage spreads to services that were healthy.</p></div>
+        <div class="card"><div class="card-tag">Consistency</div><h3>Money must never be half-moved</h3><p>A UPI transfer touches the payer bank, the NPCI switch and the payee bank. No single ACID transaction spans them, so a failure midway can leave money debited and never credited.</p></div>
+        <div class="card"><div class="card-tag">Governance</div><h3>Nobody knows the blast radius</h3><p>With dozens of services, teams can't say which business capabilities break when a given service fails, or which service to harden first.</p></div>
+      </div>
+
+      <h2 class="sec-title">How the study maps to the syllabus</h2>
+      <div class="map-table">
+        <div class="mt-row head"><span>Module</span><span>What it shows</span><span>Unit</span></div>
+        <a class="mt-row" href="#architecture"><span>Reference architecture</span><span>Layered enterprise SOA, centrality-ranked services</span><span class="u">1</span></a>
+        <a class="mt-row" href="#chaos"><span>Chaos Lab</span><span>Nonfunctional properties: availability and tail latency under faults</span><span class="u">2</span></a>
+        <a class="mt-row" href="#breaker"><span>Circuit breaker</span><span>Service design pattern as a finite state machine</span><span class="u">2 · 5</span></a>
+        <a class="mt-row" href="#saga"><span>Saga orchestrator</span><span>Service orchestration with compensating transactions</span><span class="u">3</span></a>
+        <a class="mt-row" href="#architecture"><span>Blast radius</span><span>Run-time governance: impact of each failure on capabilities</span><span class="u">3</span></a>
+        <a class="mt-row" href="#qos"><span>QoS composer</span><span>Composite applications: multi-objective provider selection</span><span class="u">2 · 3</span></a>
+        <a class="mt-row" href="#results"><span>Event-stream analytics</span><span>Big data on the service bus: anomaly and fraud detection</span><span class="u">4</span></a>
+        <a class="mt-row" href="#business"><span>Business case</span><span>ROI, NPV and payback of SOA vs monolith</span><span class="u">4 · 5</span></a>
+      </div>
+    </section>
+
+    <!-- ================= ARCHITECTURE ================= -->
+    <section class="view" id="view-architecture">
+      <header class="view-head">
+        <div class="eyebrow">01 · Unit 1 &amp; Unit 3</div>
+        <h1>Reference architecture &amp; blast radius</h1>
+        <p>Click any service to fail it. Every service that depends on it, directly or through others, lights up, and the panel shows which business capabilities degrade.</p>
+      </header>
+      <div class="arch-wrap">
+        <div class="panel arch-canvas">
+          <svg id="archSvg" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="legend-inline">
+            <span><i class="sw failed"></i>failed service</span>
+            <span><i class="sw impacted"></i>impacted caller</span>
+            <span>node size = betweenness centrality</span>
+          </div>
+        </div>
+        <div class="panel arch-side" id="archSide">
+          <div class="empty-state">
+            <div class="es-icon">⌖</div>
+            <p>Select a service in the diagram to run a failure analysis.</p>
+            <button class="btn small" id="archWorst">Show the worst single point of failure</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CHAOS ================= -->
+    <section class="view" id="view-chaos">
+      <header class="view-head">
+        <div class="eyebrow">02 · Unit 2 · Nonfunctional properties</div>
+        <h1>Chaos Lab</h1>
+        <p>Three copies of the payment path receive the same traffic. Inject a fault and watch how each resilience strategy copes. Values are success rates over a rolling 10-second window.</p>
+      </header>
+      <div class="lab">
+        <div class="panel lab-controls">
+          <div class="ctl">
+            <label>Traffic</label>
+            <div class="btn-row">
+              <button class="btn primary small" id="chaosPlay">▶ Start traffic</button>
+              <button class="btn small" id="chaosReset">Reset</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <label>Fault injection</label>
+            <div class="btn-row wrap">
+              <button class="btn danger small" id="injBank">Bank-CBS brown-out</button>
+              <button class="btn warn small" id="injNpci">NPCI latency spike</button>
+              <button class="btn small" id="injClear">Clear faults</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <label>Brown-out failure rate <output id="sevOut">65%</output></label>
+            <input type="range" id="sev" min="20" max="95" value="65">
+          </div>
+          <div class="ctl">
+            <label>Circuit-breaker trip threshold <output id="thrOut">30%</output></label>
+            <input type="range" id="thr" min="10" max="60" value="30">
+          </div>
+          <div class="ctl">
+            <label>Simulation speed <output id="spdOut">4×</output></label>
+            <input type="range" id="spd" min="1" max="10" value="4">
+          </div>
+          <div class="fault-state" id="faultState"><span class="dot ok"></span>No active faults</div>
+        </div>
+        <div class="lab-main">
+          <div class="panel">
+            <div class="panel-head"><h3>Success rate by strategy</h3><span class="mono" id="chaosClock">t = 0 s</span></div>
+            <canvas id="chaosChart" height="300"></canvas>
+          </div>
+          <div class="strategy-cards">
+            <div class="scard" style="--c:var(--red)"><div class="sc-name">Naive synchronous</div><div class="sc-v" id="sNaive">–</div><div class="sc-sub">p99 <span id="lNaive">–</span></div><p>Waits the full 3 s timeout on every failure.</p></div>
+            <div class="scard" style="--c:var(--amber)"><div class="sc-name">Retry ×3, no backoff</div><div class="sc-v" id="sRetry">–</div><div class="sc-sub">p99 <span id="lRetry">–</span></div><p>Recovers some calls but triples load on a struggling bank.</p></div>
+            <div class="scard" style="--c:var(--teal)"><div class="sc-name">Circuit breaker + bulkhead + fallback</div><div class="sc-v" id="sCb">–</div><div class="sc-sub">p99 <span id="lCb">–</span></div><p>Fails fast, then accepts payments for deferred settlement.</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= BREAKER ================= -->
+    <section class="view" id="view-breaker">
+      <header class="view-head">
+        <div class="eyebrow">03 · Unit 2 &amp; 5 · Service design patterns</div>
+        <h1>Circuit breaker state machine</h1>
+        <p>Send requests to the Bank-CBS dependency yourself. Raise the downstream failure rate and the breaker trips OPEN, waits, sends trial probes in HALF-OPEN, then either closes or trips again.</p>
+      </header>
+      <div class="lab">
+        <div class="panel lab-controls">
+          <div class="ctl">
+            <label>Downstream failure rate <output id="cbFailOut">5%</output></label>
+            <input type="range" id="cbFail" min="0" max="100" value="5">
+          </div>
+          <div class="ctl">
+            <label>Requests</label>
+            <div class="btn-row wrap">
+              <button class="btn small" id="cbOne">Send 1 request</button>
+              <button class="btn primary small" id="cbAuto">▶ Auto traffic</button>
+            </div>
+          </div>
+          <div class="ctl spec">
+            <div><span>Window</span><b>20 calls</b></div>
+            <div><span>Trip when errors &gt;</span><b>50%</b></div>
+            <div><span>Open timeout</span><b>4 s</b></div>
+            <div><span>Half-open probes</span><b>3</b></div>
+          </div>
+          <div class="cb-counters">
+            <div><b id="cbCalled">0</b><span>reached bank</span></div>
+            <div><b id="cbShort">0</b><span>short-circuited</span></div>
+            <div><b id="cbTrips">0</b><span>trips</span></div>
+          </div>
+        </div>
+        <div class="lab-main">
+          <div class="panel">
+            <svg id="fsmSvg" viewBox="0 0 760 290"></svg>
+            <div class="window-strip">
+              <span class="ws-label">Sliding window</span>
+              <div id="cbWindow" class="ws-dots"></div>
+              <span class="ws-err mono" id="cbErr">error rate 0%</span>
+            </div>
+            <div class="timer-bar"><div id="cbTimer"></div></div>
+          </div>
+          <div class="panel log-panel">
+            <div class="panel-head"><h3>Event log</h3></div>
+            <div class="log mono" id="cbLog"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SAGA ================= -->
+    <section class="view" id="view-saga">
+      <header class="view-head">
+        <div class="eyebrow">04 · Unit 3 · Service orchestration</div>
+        <h1>Saga orchestrator</h1>
+        <p>A P2P payment is six local transactions. If one fails, the coordinator runs the compensating steps in reverse order, so money is never left half-moved. Pick where to inject a failure and run it.</p>
+      </header>
+      <div class="panel saga-ctl">
+        <div class="ctl inline">
+          <label for="sagaFail">Inject failure at</label>
+          <select id="sagaFail">
+            <option value="random">Random (realistic step failure rates)</option>
+            <option value="none">No failure (happy path)</option>
+          </select>
+        </div>
+        <button class="btn primary" id="sagaRun">▶ Run transaction</button>
+        <button class="btn" id="sagaBatch">Run 500 transactions</button>
+      </div>
+      <div class="panel">
+        <div class="saga-track" id="sagaTrack"></div>
+        <div class="saga-comp-label">Compensation lane ↩</div>
+        <div class="saga-track comp" id="sagaComp"></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel log-panel"><div class="panel-head"><h3>Coordinator log</h3><span class="mono" id="sagaTx">–</span></div><div class="log mono" id="sagaLog"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Outcomes so far</h3><span class="mono" id="sagaTotal">0 tx</span></div><canvas id="sagaChart" height="220"></canvas></div>
+      </div>
+    </section>
+
+    <!-- ================= QOS ================= -->
+    <section class="view" id="view-qos">
+      <header class="view-head">
+        <div class="eyebrow">05 · Unit 2 &amp; 3 · Composite applications</div>
+        <h1>QoS-aware service composition</h1>
+        <p>Five abstract services, six candidate providers each: 7,776 possible compositions. Latency and cost add up along the workflow; reliability multiplies. Move the weights and the optimiser picks a different binding from the Pareto front.</p>
+        <p class="mono" style="margin-top:8px">Note: your browser generates its own random provider catalogue, so the Pareto count here differs from the notebook figure (161).</p>
+      </header>
+      <div class="lab">
+        <div class="panel lab-controls">
+          <div class="ctl"><label>Latency weight <output id="wLatOut">0.40</output></label><input type="range" id="wLat" min="0" max="100" value="40"></div>
+          <div class="ctl"><label>Cost weight <output id="wCostOut">0.30</output></label><input type="range" id="wCost" min="0" max="100" value="30"></div>
+          <div class="ctl"><label>Reliability weight <output id="wRelOut">0.30</output></label><input type="range" id="wRel" min="0" max="100" value="30"></div>
+          <div class="ctl"><label>Presets</label>
+            <div class="btn-row wrap">
+              <button class="btn small" data-preset="40,30,30">Balanced</button>
+              <button class="btn small" data-preset="90,5,5">Real-time</button>
+              <button class="btn small" data-preset="5,90,5">Budget</button>
+              <button class="btn small" data-preset="5,5,90">Mission-critical</button>
+            </div>
+          </div>
+          <div class="qos-best" id="qosBest"></div>
+        </div>
+        <div class="lab-main">
+          <div class="panel"><div class="panel-head"><h3>Search space: latency vs reliability</h3><span class="mono" id="qosCount"></span></div><canvas id="qosChart" height="360"></canvas>
+            <div class="legend-inline"><span><i class="sw" style="background:#334155"></i>dominated</span><span><i class="sw" style="background:var(--cyan)"></i>Pareto-optimal</span><span><i class="sw star"></i>selected</span></div>
+          </div>
+          <div class="panel"><div class="panel-head"><h3>Selected binding</h3></div><div id="qosTable" class="qos-table"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= BUSINESS ================= -->
+    <section class="view" id="view-business">
+      <header class="view-head">
+        <div class="eyebrow">06 · Unit 4 · Business case for SOA</div>
+        <h1>Monte Carlo business case</h1>
+        <p>A five-year cash-flow model of SOA vs a monolith, run 3,000 times with random variation. SOA costs more up front but lowers running cost through reuse, ships features faster and has fewer costly outages. Change the assumptions and see if the case still holds.</p>
+      </header>
+      <div class="lab">
+        <div class="panel lab-controls">
+          <div class="ctl"><label>SOA upfront cost (₹ cr) <output id="bCapexOut">30</output></label><input type="range" id="bCapex" min="15" max="60" value="30"></div>
+          <div class="ctl"><label>SOA revenue growth / yr <output id="bGrowOut">15%</output></label><input type="range" id="bGrow" min="0" max="30" value="15"></div>
+          <div class="ctl"><label>Monolith tech-debt growth / yr <output id="bDebtOut">12%</output></label><input type="range" id="bDebt" min="0" max="25" value="12"></div>
+          <div class="ctl"><label>Discount rate <output id="bRateOut">10%</output></label><input type="range" id="bRate" min="4" max="20" value="10"></div>
+          <button class="btn small" id="bReset">Reset to study assumptions</button>
+        </div>
+        <div class="lab-main">
+          <div class="kpi-row tight">
+            <div class="kpi"><div class="kpi-v" id="bWin">–</div><div class="kpi-l">P(SOA beats monolith)</div></div>
+            <div class="kpi"><div class="kpi-v" id="bNpvS">–</div><div class="kpi-l">median NPV, SOA</div></div>
+            <div class="kpi"><div class="kpi-v" id="bNpvM">–</div><div class="kpi-l">median NPV, monolith</div></div>
+            <div class="kpi"><div class="kpi-v" id="bPay">–</div><div class="kpi-l">SOA median payback</div></div>
+          </div>
+          <div class="panel"><div class="panel-head"><h3>NPV distribution (₹ crore)</h3></div><canvas id="bChart" height="280"></canvas>
+            <div class="legend-inline"><span><i class="sw" style="background:#64748b"></i>Monolith</span><span><i class="sw" style="background:var(--blue)"></i>SOA</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= RESULTS ================= -->
+    <section class="view" id="view-results">
+      <header class="view-head">
+        <div class="eyebrow">07 · Evidence</div>
+        <h1>Results gallery</h1>
+        <p>All figures from the Python study (Google Colab notebook, fixed random seed 42). Click a figure to enlarge it.</p>
+      </header>
+      <div class="filters" id="galFilters">
+        <button class="chip active" data-f="all">All</button>
+        <button class="chip" data-f="1">Unit 1</button>
+        <button class="chip" data-f="2">Unit 2</button>
+        <button class="chip" data-f="3">Unit 3</button>
+        <button class="chip" data-f="4">Unit 4</button>
+        <button class="chip" data-f="5">Unit 5</button>
+      </div>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <!-- ================= REPORT ================= -->
+    <section class="view" id="view-report">
+      <header class="view-head">
+        <div class="eyebrow">08 · Report</div>
+        <h1>Method, findings &amp; limitations</h1>
+      </header>
+      <div class="report">
+        <div class="tabs" id="repTabs">
+          <button class="tab active" data-t="method">Method</button>
+          <button class="tab" data-t="findings">Findings</button>
+          <button class="tab" data-t="practice">Best practices</button>
+          <button class="tab" data-t="limits">Limitations</button>
+        </div>
+        <div class="tab-body active" id="t-method">
+          <div class="timeline">
+            <div class="tl"><b>1 · Model the enterprise</b><p>Built a 23-service, six-layer service inventory for a UPI-style payments company as a directed dependency graph and ranked services by betweenness centrality.</p></div>
+            <div class="tl"><b>2 · Inject chaos</b><p>Simulated 36,000 requests over 900 s with a 3-minute Bank-CBS brown-out (65% failure) and a 1-minute NPCI latency spike, under three resilience strategies.</p></div>
+            <div class="tl"><b>3 · Orchestrate sagas</b><p>Ran 5,000 six-step payment sagas with per-step failure probabilities; each failure triggers compensations in reverse order.</p></div>
+            <div class="tl"><b>4 · Measure blast radius</b><p>For each service, computed which callers inside each capability's call chain are transitively affected when it fails.</p></div>
+            <div class="tl"><b>5 · Govern</b><p>Generated a week of hourly availability per service, policy-as-code violations and error-budget burn against a 99.9% SLO.</p></div>
+            <div class="tl"><b>6 · Compose &amp; justify</b><p>Enumerated 7,776 provider bindings and found the Pareto front; ran 10,000 Monte Carlo scenarios of 5-year NPV for SOA vs monolith.</p></div>
+          </div>
+        </div>
+        <div class="tab-body" id="t-findings">
+          <ol class="findings">
+            <li><b>Retries alone are a trap.</b> Retrying three times without backoff raised brown-out success from 35% to about 72%, but pushed p99 latency to about 7.3 s by tripling load on the failing bank.</li>
+            <li><b>Circuit breaker + bulkhead + fallback keeps the business running.</b> About 91% of payments were accepted during the brown-out, and p99 latency fell below the 2 s SLA because calls fail fast instead of waiting.</li>
+            <li><b>Sagas give consistency without distributed locks.</b> Out of 5,000 sagas, about 16% aborted and every one was fully compensated; NPCI routing was the most common failure point.</li>
+            <li><b>The riskiest node isn't the most central one.</b> CustomerDB has low centrality but the largest blast radius, because one database is shared by several services. Splitting it per service is governance priority #1.</li>
+            <li><b>QoS is a trade-off, not a maximum.</b> Only 161 of 7,776 bindings are Pareto-optimal; which one is "best" depends on the weights the business sets.</li>
+            <li><b>The business case is robust.</b> SOA had higher NPV in about 99% of 10,000 scenarios, despite costing about 1.7× more up front.</li>
+          </ol>
+        </div>
+        <div class="tab-body" id="t-practice">
+          <div class="grid-2">
+            <div class="card"><div class="card-tag">Strategy</div><h3>Design for failure</h3><p>Treat every remote call as unreliable: timeouts, circuit breakers and bulkheads by default, retries only with exponential backoff and jitter.</p></div>
+            <div class="card"><div class="card-tag">Development</div><h3>Make operations idempotent</h3><p>Every saga step and its compensation must be safe to repeat, keyed by an idempotency key, so retries can't double-debit.</p></div>
+            <div class="card"><div class="card-tag">Governance</div><h3>Policy as code</h3><p>Enforce mTLS, PII masking, schema pinning and timeouts automatically at deploy time instead of in review checklists.</p></div>
+            <div class="card"><div class="card-tag">EA alignment</div><h3>Map services to capabilities</h3><p>Keep a live service-to-capability map so business and IT agree on what an outage costs and where to invest.</p></div>
+          </div>
+        </div>
+        <div class="tab-body" id="t-limits">
+          <ul class="findings">
+            <li>All data is <b>synthetic</b>: parameters were chosen to be realistic, not measured from a production payment system.</li>
+            <li>Latency distributions are log-normal with no queueing model; real retry storms can be worse because of thread-pool exhaustion.</li>
+            <li>The financial model uses simple normal and Poisson assumptions; real SOA migrations also carry organisational and skills costs.</li>
+            <li>The QoS model assumes a purely sequential workflow; parallel branches would use max-latency instead of sum.</li>
+          </ul>
+        </div>
+        <div class="downloads">
+          <a class="dl" href="notebook/PaySphere_SOA_CaseStudy.ipynb" download><span>⬇</span><div><b>Colab notebook</b><small>.ipynb · 11 cells · 10 figures</small></div></a>
+          <a class="dl" href="notebook/PaySphere_SOA_CaseStudy.py" download><span>⬇</span><div><b>Python source</b><small>.py · numpy, pandas, networkx, matplotlib</small></div></a>
+        </div>
+        <p class="author">Prepared by <b>MD Shadaan Moin</b> · B.Tech CSE, SRM Institute of Science and Technology · 21CSE457T Service Oriented Architecture</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="lightbox" id="lightbox"><button class="lb-close" aria-label="Close">×</button><img alt=""><div class="lb-cap"></div></div>
+
+<script src="app.js"></script>
+</body>
+</html>
